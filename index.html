@@ -91,4 +91,147 @@
             width: 100%;
             padding: 8px;
             margin-bottom: 8px;
-            border: 1px
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .save-note-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .sortable-ghost { opacity: 0.4; background: #eee; }
+
+        @media (max-width: 480px) {
+            .app-container { margin: 20px 10px; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h2>Mikel's Synced Tasks</h2>
+        
+        <div class="input-group">
+            <input type="text" id="task-input" placeholder="Add a new task...">
+            <button id="add-btn">Add</button>
+        </div>
+
+        <ul id="list-container">
+            </ul>
+    </div>
+
+    <script type="module">
+        // 1. Import Firebase from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 2. YOUR CONFIGURATION
+        const firebaseConfig = {
+          apiKey: "AIzaSyBmQXq-gHAC-cuGWtoY1DOLjOyIzn3Y3bo",
+          authDomain: "mikels-todo-list.firebaseapp.com",
+          projectId: "mikels-todo-list",
+          storageBucket: "mikels-todo-list.firebasestorage.app",
+          messagingSenderId: "958944898366",
+          appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
+        };
+
+        // 3. Initialize Firebase with Error Handling
+        console.log("Initializing Firebase...");
+        let app, db, colRef;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            colRef = collection(db, "todos");
+            console.log("Firebase Initialized successfully.");
+        } catch (e) {
+            alert("CRITICAL ERROR: Firebase failed to start. " + e.message);
+        }
+
+        const inputBox = document.getElementById("task-input");
+        const listContainer = document.getElementById("list-container");
+
+        // 4. SYNC ENGINE
+        const q = query(colRef, orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            listContainer.innerHTML = ""; 
+            
+            snapshot.docs.forEach(docSnap => {
+                const task = docSnap.data();
+                const id = docSnap.id;
+
+                const li = document.createElement("li");
+                li.setAttribute('data-id', id);
+                li.innerHTML = `
+                    <div class="task-header">
+                        <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
+                        <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
+                        <div class="btn-group">
+                            <button class="icon-btn details-btn">📝</button>
+                            <button class="icon-btn delete-btn">✕</button>
+                        </div>
+                    </div>
+                    <div class="task-details" id="details-${id}">
+                        <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
+                        <button class="save-note-btn" data-id="${id}">Save Note</button>
+                    </div>
+                `;
+                listContainer.appendChild(li);
+
+                // Re-attach listeners
+                li.querySelector('.checkbox-btn').addEventListener('change', () => updateDoc(doc(db, "todos", id), { done: !task.done }));
+                li.querySelector('.details-btn').addEventListener('click', () => document.getElementById(`details-${id}`).classList.toggle("open"));
+                li.querySelector('.delete-btn').addEventListener('click', () => { if(confirm("Delete?")) deleteDoc(doc(db, "todos", id)); });
+                li.querySelector('.save-note-btn').addEventListener('click', () => {
+                     updateDoc(doc(db, "todos", id), { note: document.getElementById(`note-${id}`).value });
+                     alert("Note saved!");
+                });
+            });
+        }, (error) => {
+            // IF PERMISSIONS ARE WRONG, THIS WILL POP UP
+            alert("DATABASE ERROR: " + error.message);
+            console.error(error);
+        });
+
+        // 5. ADD TASK
+        document.getElementById("add-btn").addEventListener("click", async () => {
+            const text = inputBox.value.trim();
+            if (!text) return;
+
+            try {
+                await addDoc(colRef, {
+                    text: text,
+                    done: false,
+                    note: "",
+                    createdAt: serverTimestamp()
+                });
+                inputBox.value = "";
+            } catch (e) {
+                // IF WRITING IS BLOCKED, THIS WILL POP UP
+                alert("WRITE ERROR: Could not save task. " + e.message);
+                console.error(e);
+            }
+        });
+
+        // Enter Key Support
+        inputBox.addEventListener("keypress", (e) => {
+             if(e.key === "Enter") document.getElementById("add-btn").click(); 
+        });
+
+        // Drag and drop
+        new Sortable(listContainer, { animation: 150, handle: '.task-header' });
+
+    </script>
+</body>
+</html>

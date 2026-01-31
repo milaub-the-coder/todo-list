@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced To-Do List</title>
+    <title>Mikel's Synced To-Do List</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         /* --- CSS STYLING --- */
@@ -21,7 +21,7 @@
         .app-container {
             background: #fff;
             width: 100%;
-            max-width: 500px; /* Slightly wider for notes */
+            max-width: 500px;
             margin: 50px 20px;
             padding: 2rem;
             border-radius: 12px;
@@ -62,53 +62,29 @@
             transition: box-shadow 0.2s;
         }
 
-        /* The Main Row (Checkbox + Text + Buttons) */
         .task-header {
             display: flex;
             align-items: center;
             padding: 12px;
-            cursor: grab; /* Shows the grab hand cursor */
+            cursor: grab;
         }
         
-        .task-header:active { cursor: grabbing; }
+        .task-text { flex-grow: 1; margin-left: 10px; font-size: 18px; }
+        .task-text.checked { text-decoration: line-through; color: #888; }
 
-        .task-text {
-            flex-grow: 1;
-            margin-left: 10px;
-            font-size: 18px;
-        }
-
-        .task-text.checked {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        /* Action Buttons */
         .btn-group { display: flex; gap: 5px; }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 5px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .icon-btn:hover { opacity: 1; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; opacity: 0.6; }
         .details-btn { color: #007bff; }
         .delete-btn { color: #ff4d4d; }
 
-        /* The Hidden Details Section */
         .task-details {
-            display: none; /* Hidden by default */
+            display: none;
             padding: 10px 12px 12px 12px;
             border-top: 1px solid #eee;
             background-color: #fafafa;
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
         }
-
         .task-details.open { display: block; }
 
         textarea {
@@ -119,7 +95,7 @@
             border-radius: 4px;
             resize: vertical;
             font-family: inherit;
-            box-sizing: border-box; /* Fixes padding width issues */
+            box-sizing: border-box;
         }
 
         .save-note-btn {
@@ -132,15 +108,18 @@
             font-size: 12px;
         }
         
-        /* Dragging Visuals */
         .sortable-ghost { opacity: 0.4; background: #eee; }
 
+        /* Mobile Adjustment */
+        @media (max-width: 480px) {
+            .app-container { margin: 20px 10px; padding: 1.5rem; }
+        }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <h2>My Tasks</h2>
+        <h2>Mikel's Tasks</h2>
         
         <div class="input-group">
             <input type="text" id="task-input" placeholder="Add a new task...">
@@ -151,111 +130,8 @@
             </ul>
     </div>
 
-    <script>
-        /* --- JAVASCRIPT LOGIC --- */
-
-        // 1. STATE MANAGEMENT
-        // We now store data as an Array of Objects, not just HTML.
-        let tasks = JSON.parse(localStorage.getItem("myAdvancedTasks")) || [];
-
-        const inputBox = document.getElementById("task-input");
-        const listContainer = document.getElementById("list-container");
-
-        // 2. RENDER FUNCTION (The Engine)
-        // This function rebuilds the visual list based on the 'tasks' array.
-        function renderTasks() {
-            listContainer.innerHTML = ""; // Clear current list
-
-            tasks.forEach((task, index) => {
-                const li = document.createElement("li");
-                li.setAttribute('data-id', index); // Track ID for dragging
-
-                // HTML structure for a single task
-                li.innerHTML = `
-                    <div class="task-header">
-                        <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleDone(${index})">
-                        <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
-                        <div class="btn-group">
-                            <button class="icon-btn details-btn" onclick="toggleDetails(${index})" title="Add Notes/Links">📝</button>
-                            <button class="icon-btn delete-btn" onclick="deleteTask(${index})" title="Delete">✕</button>
-                        </div>
-                    </div>
-                    <div class="task-details" id="details-${index}">
-                        <textarea id="note-${index}" placeholder="Add notes or paste links here..." rows="3">${task.note || ''}</textarea>
-                        <button class="save-note-btn" onclick="saveNote(${index})">Save Note</button>
-                    </div>
-                `;
-                listContainer.appendChild(li);
-            });
-        }
-
-        // 3. CORE FUNCTIONS
-
-        function addTask() {
-            const text = inputBox.value.trim();
-            if (!text) { alert("Write something!"); return; }
-
-            // Add new object to array
-            tasks.push({ 
-                text: text, 
-                done: false, 
-                note: "" 
-            });
-            
-            saveAndRender();
-            inputBox.value = "";
-        }
-
-        function toggleDone(index) {
-            tasks[index].done = !tasks[index].done;
-            saveAndRender();
-        }
-
-        function deleteTask(index) {
-            tasks.splice(index, 1); // Remove from array
-            saveAndRender();
-        }
-
-        function toggleDetails(index) {
-            const detailsDiv = document.getElementById(`details-${index}`);
-            detailsDiv.classList.toggle("open");
-        }
-
-        function saveNote(index) {
-            const noteInput = document.getElementById(`note-${index}`).value;
-            tasks[index].note = noteInput;
-            
-            // Save to storage but DON'T re-render (keeps the menu open)
-            localStorage.setItem("myAdvancedTasks", JSON.stringify(tasks));
-            alert("Note saved!");
-        }
-
-        function saveAndRender() {
-            localStorage.setItem("myAdvancedTasks", JSON.stringify(tasks));
-            renderTasks();
-        }
-
-        // 4. EVENT LISTENERS
-        document.getElementById("add-btn").addEventListener("click", addTask);
-        inputBox.addEventListener("keypress", (e) => { if(e.key === "Enter") addTask(); });
-
-        // 5. DRAG AND DROP (SortableJS)
-        new Sortable(listContainer, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function (evt) {
-                // When drag ends, reorder the array data to match the new visual order
-                const item = tasks.splice(evt.oldIndex, 1)[0]; // Remove item from old position
-                tasks.splice(evt.newIndex, 0, item); // Insert at new position
-                localStorage.setItem("myAdvancedTasks", JSON.stringify(tasks)); // Save new order
-                // Note: We don't call renderTasks() here because the DOM is already updated by the library
-            }
-        });
-
-        // Initialize
-        renderTasks();
-
-    </script>
-
-</body>
-</html>
+    <script type="module">
+        // 1. Import Firebase from CDN (Required for browser usage)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";

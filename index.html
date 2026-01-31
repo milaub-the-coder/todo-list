@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikel's Synced To-Do List</title>
+    <title>Mikel's Synced To-Do List (Debug Mode)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         /* --- CSS STYLING --- */
@@ -91,47 +91,4 @@
             width: 100%;
             padding: 8px;
             margin-bottom: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-
-        .save-note-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .sortable-ghost { opacity: 0.4; background: #eee; }
-
-        /* Mobile Adjustment */
-        @media (max-width: 480px) {
-            .app-container { margin: 20px 10px; padding: 1.5rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <h2>Mikel's Tasks</h2>
-        
-        <div class="input-group">
-            <input type="text" id="task-input" placeholder="Add a new task...">
-            <button id="add-btn">Add</button>
-        </div>
-
-        <ul id="list-container">
-            </ul>
-    </div>
-
-    <script type="module">
-        // 1. Import Firebase from CDN (Required for browser usage)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
-        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            border: 1px

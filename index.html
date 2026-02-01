@@ -352,7 +352,13 @@
             inputBox.onkeypress = (e) => { if(e.key === "Enter") addBtn.click(); };
         }
         
-        new Sortable(listContainer, { animation: 150, handle: '.task-header' });
-    </script>
+// Initialize Drag & Drop with "Touch Protection"
+        new Sortable(listContainer, { 
+            animation: 150, 
+            handle: '.task-header',
+            filter: 'input, button',  // Ignore drags on checkboxes & buttons
+            preventOnFilter: false    // Allow the click to actually work!
+        });    </script>
 </body>
 </html>
+

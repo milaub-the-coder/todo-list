@@ -37,7 +37,7 @@
             --input-border: #3e4042;
             --item-bg: #242526;
             --shadow: 0 4px 15px rgba(0,0,0,0.5);
-            --primary: #4da3ff; /* Lighter blue for dark mode */
+            --primary: #4da3ff;
             --primary-hover: #007bff;
         }
 
@@ -76,8 +76,16 @@
             margin-bottom: 1.5rem;
         }
         
+        /* Left side of header */
         h2 { margin: 0; font-size: 1.5rem; color: var(--text-main); }
         
+        /* Right side container (Toggle + Info) */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Space between moon and name */
+        }
+
         #user-info {
             font-size: 0.9rem;
             color: var(--text-secondary);
@@ -106,8 +114,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 10px;
             color: var(--text-main);
+            /* Removed position:absolute so it flows naturally */
         }
 
         /* --- INPUTS & BUTTONS --- */
@@ -166,7 +174,7 @@
             display: none;
             padding: 10px 12px 12px 12px;
             border-top: 1px solid var(--border-color);
-            background-color: var(--bg-color); /* Slightly different contrast */
+            background-color: var(--bg-color); 
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
         }
@@ -193,10 +201,6 @@
 
     <div class="app-container">
         
-        <div style="position: absolute; top: 15px; right: 20px;">
-            <button id="theme-toggle">🌙</button>
-        </div>
-
         <div id="login-view">
             <h2>Mikel's Private Tasks</h2>
             <br><p>Secure, Cloud-Synced, Dark-Mode Ready.</p><br>
@@ -206,9 +210,13 @@
         <div id="app-view" class="hidden">
             <div class="header-row">
                 <h2>My Tasks</h2>
-                <div id="user-info">
-                    <span id="user-name">User</span>
-                    <span id="logout-btn" class="action-link">Sign Out</span>
+                
+                <div class="header-right">
+                    <button id="theme-toggle">🌙</button>
+                    <div id="user-info">
+                        <span id="user-name">User</span>
+                        <span id="logout-btn" class="action-link">Sign Out</span>
+                    </div>
                 </div>
             </div>
             
@@ -323,7 +331,7 @@
                     `;
                     listContainer.appendChild(li);
 
-                    // Re-attach listeners
+                    // Re-attach listeners with TOUCH PROTECTION
                     li.querySelector('.checkbox-btn').addEventListener('change', () => 
                         updateDoc(doc(userTodosRef, id), { done: !task.done }));
                     
@@ -352,13 +360,13 @@
             inputBox.onkeypress = (e) => { if(e.key === "Enter") addBtn.click(); };
         }
         
-// Initialize Drag & Drop with "Touch Protection"
+        // Drag and Drop (With Touch Protection)
         new Sortable(listContainer, { 
             animation: 150, 
             handle: '.task-header',
-            filter: 'input, button',  // Ignore drags on checkboxes & buttons
-            preventOnFilter: false    // Allow the click to actually work!
-        });    </script>
+            filter: 'input, button', 
+            preventOnFilter: false
+        });
+    </script>
 </body>
 </html>
-

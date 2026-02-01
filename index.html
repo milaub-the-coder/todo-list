@@ -175,3 +175,143 @@
           apiKey: "AIzaSyBmQXq-gHAC-cuGWtoY1DOLjOyIzn3Y3bo",
           authDomain: "mikels-todo-list.firebaseapp.com",
           projectId: "mikels-todo-list",
+          storageBucket: "mikels-todo-list.firebasestorage.app",
+          messagingSenderId: "958944898366",
+          appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
+        };
+
+        // 3. Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // DOM Elements
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app-view');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userNameSpan = document.getElementById('user-name');
+        const listContainer = document.getElementById("list-container");
+        const inputBox = document.getElementById("task-input");
+        const addBtn = document.getElementById("add-btn");
+
+        let currentUser = null;
+        let unsubscribe = null; // To stop listening when logged out
+
+        // 4. AUTHENTICATION LOGIC
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch((error) => alert("Login Failed: " + error.message));
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                location.reload(); // Refresh page on logout to clear state
+            });
+        });
+
+        // 5. MAIN STATE LISTENER
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // USER IS LOGGED IN
+                currentUser = user;
+                loginView.classList.add('hidden');
+                appView.classList.remove('hidden');
+                userNameSpan.textContent = user.displayName || user.email;
+                
+                startApp(user);
+            } else {
+                // USER IS LOGGED OUT
+                currentUser = null;
+                loginView.classList.remove('hidden');
+                appView.classList.add('hidden');
+                listContainer.innerHTML = "";
+            }
+        });
+
+        // 6. APP FUNCTIONALITY (Only runs when logged in)
+        function startApp(user) {
+            console.log("Starting app for user:", user.uid);
+            
+            // DYNAMIC PATH: users/{uid}/todos
+            // This ensures every user gets their own private list
+            const userTodosRef = collection(db, "users", user.uid, "todos");
+            const q = query(userTodosRef, orderBy("createdAt", "desc"));
+
+            // Real-time Listener
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                listContainer.innerHTML = ""; 
+                snapshot.docs.forEach(docSnap => {
+                    const task = docSnap.data();
+                    const id = docSnap.id;
+                    renderTask(id, task);
+                });
+            }, (error) => {
+                console.error("Sync Error:", error);
+                // alert("Error syncing data: " + error.message);
+            });
+
+            // Add Task Logic
+            addBtn.onclick = async () => {
+                const text = inputBox.value.trim();
+                if (!text) return;
+                try {
+                    await addDoc(userTodosRef, {
+                        text: text, done: false, note: "", createdAt: serverTimestamp()
+                    });
+                    inputBox.value = "";
+                } catch (e) {
+                    alert("Write Error: " + e.message);
+                }
+            };
+            
+            // Enter Key Support
+            inputBox.onkeypress = (e) => {
+                 if(e.key === "Enter") addBtn.click(); 
+            };
+        }
+
+        // Helper: Render Single Task
+        function renderTask(id, task) {
+            const li = document.createElement("li");
+            li.setAttribute('data-id', id);
+            li.innerHTML = `
+                <div class="task-header">
+                    <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
+                    <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
+                    <div class="btn-group">
+                        <button class="icon-btn details-btn">📝</button>
+                        <button class="icon-btn delete-btn">✕</button>
+                    </div>
+                </div>
+                <div class="task-details" id="details-${id}">
+                    <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
+                    <button class="save-note-btn" data-id="${id}">Save Note</button>
+                </div>
+            `;
+            listContainer.appendChild(li);
+
+            // Button Listeners
+            const userTodosRef = collection(db, "users", currentUser.uid, "todos");
+            
+            li.querySelector('.checkbox-btn').addEventListener('change', () => 
+                updateDoc(doc(userTodosRef, id), { done: !task.done }));
+            
+            li.querySelector('.details-btn').addEventListener('click', () => 
+                document.getElementById(`details-${id}`).classList.toggle("open"));
+            
+            li.querySelector('.delete-btn').addEventListener('click', () => 
+                { if(confirm("Delete?")) deleteDoc(doc(userTodosRef, id)); });
+            
+            li.querySelector('.save-note-btn').addEventListener('click', () => {
+                 updateDoc(doc(userTodosRef, id), { note: document.getElementById(`note-${id}`).value });
+                 alert("Note saved!");
+            });
+        }
+
+        // Initialize Drag & Drop
+        new Sortable(listContainer, { animation: 150, handle: '.task-header' });
+
+    </script>
+</body>
+</html>

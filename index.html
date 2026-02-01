@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikel's Synced To-Do List (Debug Mode)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mikel's Synced To-Do List</title>
+    
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
     <style>
         /* --- CSS STYLING --- */
         body {
@@ -17,6 +21,8 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
+            /* Prevent pull-to-refresh on mobile which feels web-like */
+            overscroll-behavior-y: none; 
         }
 
         .app-container {
@@ -126,17 +132,16 @@
             <button id="add-btn">Add</button>
         </div>
 
-        <ul id="list-container">
-            </ul>
+        <ul id="list-container"></ul>
     </div>
 
     <script type="module">
-        // 1. Import Firebase from CDN
+        // 1. Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 2. YOUR CONFIGURATION
+        // 2. CONFIGURATION
         const firebaseConfig = {
           apiKey: "AIzaSyBmQXq-gHAC-cuGWtoY1DOLjOyIzn3Y3bo",
           authDomain: "mikels-todo-list.firebaseapp.com",
@@ -146,102 +151,5 @@
           appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
         };
 
-        // 3. Initialize Firebase with Error Handling
-        console.log("Initializing Firebase...");
-        let app, db, colRef;
-        
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            colRef = collection(db, "todos");
-            console.log("Firebase Initialized successfully.");
-        } catch (e) {
-            alert("CRITICAL ERROR: Firebase failed to start. " + e.message);
-        }
-
-        const inputBox = document.getElementById("task-input");
-        const listContainer = document.getElementById("list-container");
-
-        // 4. SYNC ENGINE
-        const q = query(colRef, orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, (snapshot) => {
-            listContainer.innerHTML = ""; 
-            
-            snapshot.docs.forEach(docSnap => {
-                const task = docSnap.data();
-                const id = docSnap.id;
-
-                const li = document.createElement("li");
-                li.setAttribute('data-id', id);
-                li.innerHTML = `
-                    <div class="task-header">
-                        <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
-                        <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
-                        <div class="btn-group">
-                            <button class="icon-btn details-btn">📝</button>
-                            <button class="icon-btn delete-btn">✕</button>
-                        </div>
-                    </div>
-                    <div class="task-details" id="details-${id}">
-                        <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
-                        <button class="save-note-btn" data-id="${id}">Save Note</button>
-                    </div>
-                `;
-                listContainer.appendChild(li);
-
-                // Re-attach listeners
-                li.querySelector('.checkbox-btn').addEventListener('change', () => updateDoc(doc(db, "todos", id), { done: !task.done }));
-                li.querySelector('.details-btn').addEventListener('click', () => document.getElementById(`details-${id}`).classList.toggle("open"));
-                li.querySelector('.delete-btn').addEventListener('click', () => { if(confirm("Delete?")) deleteDoc(doc(db, "todos", id)); });
-                li.querySelector('.save-note-btn').addEventListener('click', () => {
-                     updateDoc(doc(db, "todos", id), { note: document.getElementById(`note-${id}`).value });
-                     alert("Note saved!");
-                });
-            });
-        }, (error) => {
-            // IF PERMISSIONS ARE WRONG, THIS WILL POP UP
-            alert("DATABASE ERROR: " + error.message);
-            console.error(error);
-        });
-
-        // 5. ADD TASK
-        document.getElementById("add-btn").addEventListener("click", async () => {
-            const text = inputBox.value.trim();
-            if (!text) return;
-
-            try {
-                await addDoc(colRef, {
-                    text: text,
-                    done: false,
-                    note: "",
-                    createdAt: serverTimestamp()
-                });
-                inputBox.value = "";
-            } catch (e) {
-                // IF WRITING IS BLOCKED, THIS WILL POP UP
-                alert("WRITE ERROR: Could not save task. " + e.message);
-                console.error(e);
-            }
-        });
-
-        // Enter Key Support
-        inputBox.addEventListener("keypress", (e) => {
-             if(e.key === "Enter") document.getElementById("add-btn").click(); 
-        });
-
-        // Drag and drop
-        new Sortable(listContainer, { animation: 150, handle: '.task-header' });
-
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('Service Worker Registered'))
-            .catch((error) => console.log('SW Registration Failed:', error));
-        }
-    </script>
-</body>
-</html>
-
-
+        // 3. Initialize Firebase
+        const app = initialize

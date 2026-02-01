@@ -1,1 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mikel's Synced To-Do List</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <style>
+        /* --- CSS STYLING --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overscroll-behavior-y: none; 
+        }
 
+        .app-container {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            margin: 50px 20px;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: #333; margin-bottom: 1.5rem; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button#add-btn {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        ul { list-style-type: none; padding: 0; }
+
+        li {
+            background: #fff;
+            border: 1px solid #eee;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: box-shadow 0.2s;
+        }
+
+        .task-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            cursor: grab;
+        }
+        
+        .task-text { flex-grow: 1; margin-left: 10px; font-size: 18px; }
+        .task-text.checked { text-decoration: line-through; color: #888; }
+
+        .btn-group { display: flex; gap: 5px; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; opacity: 0.6; }
+        .details-btn { color: #007bff; }
+        .delete-btn { color: #ff4d4d; }
+
+        .task-details {
+            display: none;
+            padding: 10px 12px 12px 12px;
+            border-top: 1px solid #eee;
+            background-color: #fafafa;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .task-details.open { display: block; }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .save-note-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .sortable-ghost { opacity: 0.4; background: #eee; }
+
+        @media (max-width: 480px) {
+            .app-container { margin: 20px 10px; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h2>Mikel's Synced Tasks</h2>
+        
+        <div class="input-group">
+            <input type="text" id="task-input" placeholder="Add a new task...">
+            <button id="add-btn">Add</button>
+        </div>
+
+        <ul id="list-container"></ul>
+    </div>
+
+    <script type="module">
+        // 1. Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 2. CONFIGURATION
+        const firebaseConfig = {
+          apiKey: "AIzaSyBmQXq-gHAC-cuGWtoY1DOLjOyIzn3Y3bo",
+          authDomain: "mikels-todo-list.firebaseapp.com",
+          projectId: "mikels-todo-list",
+          storageBucket: "mikels-todo-list.firebasestorage.app",
+          messagingSenderId: "958944898366",
+          appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
+        };
+
+        // 3. LOGIC START
+        console.log("Starting App...");
+
+        try {
+            // Initialize
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const colRef = collection(db, "todos");
+            const inputBox = document.getElementById("task-input");
+            const listContainer = document.getElementById("list-container");
+
+            console.log("Firebase initialized. Connecting...");
+
+            // 4. SYNC ENGINE
+            const q = query(colRef, orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                console.log("Database Update Received. Items:", snapshot.docs.length);
+                listContainer.innerHTML = ""; 
+                
+                snapshot.docs.forEach(docSnap => {
+                    const task = docSnap.data();
+                    const id = docSnap.id;
+                    const li = document.createElement("li");
+                    li.setAttribute('data-id', id);
+                    li.innerHTML = `
+                        <div class="task-header">
+                            <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
+                            <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
+                            <div class="btn-group">
+                                <button class="icon-btn details-btn">📝</button>
+                                <button class="icon-btn delete-btn">✕</button>
+                            </div>
+                        </div>
+                        <div class="task-details" id="details-${id}">
+                            <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
+                            <button class="save-note-btn" data-id="${id}">Save Note</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(li);
+
+                    // Listeners
+                    li.querySelector('.checkbox-btn').addEventListener('change', () => updateDoc(doc(db, "todos", id), { done: !task.done }));
+                    li.querySelector('.details-btn').addEventListener('click', () => document.getElementById(`details-${id}`).classList.toggle("open"));
+                    li.querySelector('.delete-btn').addEventListener('click', () => { if(confirm("Delete?")) deleteDoc(doc(db, "todos", id)); });
+                    li.querySelector('.save-note-btn').addEventListener('click', () => {
+                        updateDoc(doc(db, "todos", id), { note: document.getElementById(`note-${id}`).value });
+                        alert("Note saved!");
+                    });
+                });
+            }, (error) => {
+                console.error("SYNC ERROR:", error);
+                alert("Database Error: " + error.message);
+            });
+
+            // 5. ADD TASK
+            document.getElementById("add-btn").addEventListener("click", async () => {
+                const text = inputBox.value.trim();
+                if (!text) return;
+                try {
+                    await addDoc(colRef, {
+                        text: text, done: false, note: "", createdAt: serverTimestamp()
+                    });
+                    inputBox.value = "";
+                } catch (e) {
+                    console.error("ADD ERROR:", e);
+                    alert("Write Error: " + e.message);
+                }
+            });
+
+            // Enter Key
+            inputBox.addEventListener("keypress", (e) => {
+                if(e.key === "Enter") document.getElementById("add-btn").click(); 
+            });
+
+            // Drag and Drop
+            new Sortable(listContainer, { animation: 150, handle: '.task-header' });
+
+        } catch (e) {
+            console.error("CRITICAL FAILURE:", e);
+            alert("App failed to load: " + e.message);
+        }
+    </script>
+<script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW Registered for Install'))
+            .catch((err) => console.log('SW Failed:', err));
+        }
+    </script>
+</body>
+</html>

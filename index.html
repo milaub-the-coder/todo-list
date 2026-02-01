@@ -11,56 +11,64 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     
     <style>
-        /* --- CSS STYLING --- */
+        /* --- CSS VARIABLES (THEMING) --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border-color: #eeeeee;
+            --input-bg: #ffffff;
+            --input-border: #dddddd;
+            --item-bg: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+        }
+
+        /* DARK MODE OVERRIDES */
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-main: #e4e6eb;
+            --text-secondary: #b0b3b8;
+            --border-color: #2f3031;
+            --input-bg: #242526;
+            --input-border: #3e4042;
+            --item-bg: #242526;
+            --shadow: 0 4px 15px rgba(0,0,0,0.5);
+            --primary: #4da3ff; /* Lighter blue for dark mode */
+            --primary-hover: #007bff;
+        }
+
+        /* --- BASE STYLES --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            overscroll-behavior-y: none; 
+            overscroll-behavior-y: none;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .app-container {
-            background: #fff;
+            background: var(--container-bg);
             width: 100%;
             max-width: 500px;
             margin: 50px 20px;
             padding: 2rem;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             position: relative;
+            transition: background-color 0.3s;
         }
 
-        /* Views Utility */
-        .hidden { display: none !important; }
-
-        /* Login Screen */
-        #login-view {
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .google-btn {
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .google-btn:hover { background-color: #357ae8; }
-
-        /* App Header */
+        /* --- HEADER & CONTROLS --- */
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -68,65 +76,114 @@
             margin-bottom: 1.5rem;
         }
         
-        h2 { margin: 0; color: #333; font-size: 1.5rem; }
+        h2 { margin: 0; font-size: 1.5rem; color: var(--text-main); }
         
         #user-info {
             font-size: 0.9rem;
-            color: #666;
+            color: var(--text-secondary);
             text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
 
-        .logout-link {
+        .action-link {
             color: #ff4d4d;
             text-decoration: underline;
             cursor: pointer;
             font-size: 0.8rem;
-            display: block;
             margin-top: 4px;
         }
 
-        /* Task List Styling */
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input[type="text"] {
-            flex-grow: 1; padding: 12px; border: 2px solid #ddd;
-            border-radius: 6px; font-size: 16px; outline: none;
-        }
-        button#add-btn {
-            padding: 12px 20px; background-color: #007bff; color: white;
-            border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+        #theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            color: var(--text-main);
         }
 
+        /* --- INPUTS & BUTTONS --- */
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        input[type="text"], textarea {
+            flex-grow: 1;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-main);
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        button.primary-btn {
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button.primary-btn:hover { background-color: var(--primary-hover); }
+
+        /* --- LOGIN SCREEN --- */
+        #login-view { text-align: center; padding: 20px; }
+        .hidden { display: none !important; }
+        
+        /* --- LIST ITEMS --- */
         ul { list-style-type: none; padding: 0; }
 
         li {
-            background: #fff; border: 1px solid #eee; margin-bottom: 10px;
-            border-radius: 8px; transition: box-shadow 0.2s;
+            background: var(--item-bg);
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: box-shadow 0.2s, background-color 0.3s;
         }
 
         .task-header { display: flex; align-items: center; padding: 12px; cursor: grab; }
+        
         .task-text { flex-grow: 1; margin-left: 10px; font-size: 18px; }
-        .task-text.checked { text-decoration: line-through; color: #888; }
+        .task-text.checked { text-decoration: line-through; color: var(--text-secondary); }
+
         .btn-group { display: flex; gap: 5px; }
-        .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; opacity: 0.6; }
-        .details-btn { color: #007bff; }
-        .delete-btn { color: #ff4d4d; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; opacity: 0.6; color: var(--text-main); }
+        .details-btn { color: var(--primary); opacity: 1; }
+        .delete-btn { color: #ff4d4d; opacity: 1; }
 
         .task-details {
-            display: none; padding: 10px 12px 12px 12px; border-top: 1px solid #eee;
-            background-color: #fafafa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+            display: none;
+            padding: 10px 12px 12px 12px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-color); /* Slightly different contrast */
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
         }
         .task-details.open { display: block; }
-
-        textarea {
-            width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd;
-            border-radius: 4px; resize: vertical; font-family: inherit; box-sizing: border-box;
-        }
-        .save-note-btn {
-            background-color: #28a745; color: white; border: none;
-            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
-        }
-        .sortable-ghost { opacity: 0.4; background: #eee; }
         
+        /* Save Note Button */
+        .save-note-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            float: right;
+        }
+
         @media (max-width: 480px) {
             .app-container { margin: 20px 10px; padding: 1.5rem; }
         }
@@ -136,25 +193,28 @@
 
     <div class="app-container">
         
+        <div style="position: absolute; top: 15px; right: 20px;">
+            <button id="theme-toggle">🌙</button>
+        </div>
+
         <div id="login-view">
             <h2>Mikel's Private Tasks</h2>
-            <p>Please sign in to view your list.</p>
-            <br>
-            <button id="login-btn" class="google-btn">Sign in with Google</button>
+            <br><p>Secure, Cloud-Synced, Dark-Mode Ready.</p><br>
+            <button id="login-btn" class="primary-btn">Sign in with Google</button>
         </div>
 
         <div id="app-view" class="hidden">
             <div class="header-row">
                 <h2>My Tasks</h2>
                 <div id="user-info">
-                    <span id="user-name">Loading...</span>
-                    <span id="logout-btn" class="logout-link">Sign Out</span>
+                    <span id="user-name">User</span>
+                    <span id="logout-btn" class="action-link">Sign Out</span>
                 </div>
             </div>
             
             <div class="input-group">
                 <input type="text" id="task-input" placeholder="Add a new task...">
-                <button id="add-btn">Add</button>
+                <button id="add-btn" class="primary-btn">Add</button>
             </div>
 
             <ul id="list-container"></ul>
@@ -163,7 +223,7 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase SDKs (Auth + Firestore)
+        // 1. Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -180,13 +240,35 @@
           appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
         };
 
-        // 3. Initialize
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // DOM Elements
+        // 3. DARK MODE LOGIC
+        const themeBtn = document.getElementById('theme-toggle');
+        const storedTheme = localStorage.getItem('theme');
+
+        // Apply saved theme on load
+        if (storedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeBtn.textContent = '☀️';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                themeBtn.textContent = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeBtn.textContent = '☀️';
+            }
+        });
+
+        // 4. APP LOGIC
         const loginView = document.getElementById('login-view');
         const appView = document.getElementById('app-view');
         const loginBtn = document.getElementById('login-btn');
@@ -195,123 +277,82 @@
         const listContainer = document.getElementById("list-container");
         const inputBox = document.getElementById("task-input");
         const addBtn = document.getElementById("add-btn");
-
+        
         let currentUser = null;
-        let unsubscribe = null; // To stop listening when logged out
 
-        // 4. AUTHENTICATION LOGIC
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch((error) => alert("Login Failed: " + error.message));
-        });
+        loginBtn.onclick = () => signInWithPopup(auth, provider).catch(e => alert(e.message));
+        logoutBtn.onclick = () => signOut(auth).then(() => location.reload());
 
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                location.reload(); // Refresh page on logout to clear state
-            });
-        });
-
-        // 5. MAIN STATE LISTENER
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // USER IS LOGGED IN
                 currentUser = user;
                 loginView.classList.add('hidden');
                 appView.classList.remove('hidden');
-                userNameSpan.textContent = user.displayName || user.email;
-                
+                userNameSpan.textContent = user.displayName;
                 startApp(user);
             } else {
-                // USER IS LOGGED OUT
-                currentUser = null;
                 loginView.classList.remove('hidden');
                 appView.classList.add('hidden');
-                listContainer.innerHTML = "";
             }
         });
 
-        // 6. APP FUNCTIONALITY (Only runs when logged in)
         function startApp(user) {
-            console.log("Starting app for user:", user.uid);
-            
-            // DYNAMIC PATH: users/{uid}/todos
-            // This ensures every user gets their own private list
             const userTodosRef = collection(db, "users", user.uid, "todos");
             const q = query(userTodosRef, orderBy("createdAt", "desc"));
 
-            // Real-time Listener
-            unsubscribe = onSnapshot(q, (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                 listContainer.innerHTML = ""; 
                 snapshot.docs.forEach(docSnap => {
                     const task = docSnap.data();
                     const id = docSnap.id;
-                    renderTask(id, task);
+                    
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <div class="task-header">
+                            <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
+                            <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
+                            <div class="btn-group">
+                                <button class="icon-btn details-btn">📝</button>
+                                <button class="icon-btn delete-btn">✕</button>
+                            </div>
+                        </div>
+                        <div class="task-details" id="details-${id}">
+                            <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
+                            <button class="save-note-btn" data-id="${id}">Save Note</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(li);
+
+                    // Re-attach listeners
+                    li.querySelector('.checkbox-btn').addEventListener('change', () => 
+                        updateDoc(doc(userTodosRef, id), { done: !task.done }));
+                    
+                    li.querySelector('.details-btn').addEventListener('click', () => 
+                        document.getElementById(`details-${id}`).classList.toggle("open"));
+                    
+                    li.querySelector('.delete-btn').addEventListener('click', () => 
+                        { if(confirm("Delete?")) deleteDoc(doc(userTodosRef, id)); });
+                    
+                    li.querySelector('.save-note-btn').addEventListener('click', () => {
+                         updateDoc(doc(userTodosRef, id), { note: document.getElementById(`note-${id}`).value });
+                         alert("Note saved!");
+                    });
                 });
-            }, (error) => {
-                console.error("Sync Error:", error);
-                // alert("Error syncing data: " + error.message);
             });
 
-            // Add Task Logic
             addBtn.onclick = async () => {
                 const text = inputBox.value.trim();
                 if (!text) return;
-                try {
-                    await addDoc(userTodosRef, {
-                        text: text, done: false, note: "", createdAt: serverTimestamp()
-                    });
-                    inputBox.value = "";
-                } catch (e) {
-                    alert("Write Error: " + e.message);
-                }
+                await addDoc(userTodosRef, {
+                    text: text, done: false, note: "", createdAt: serverTimestamp()
+                });
+                inputBox.value = "";
             };
-            
-            // Enter Key Support
-            inputBox.onkeypress = (e) => {
-                 if(e.key === "Enter") addBtn.click(); 
-            };
+
+            inputBox.onkeypress = (e) => { if(e.key === "Enter") addBtn.click(); };
         }
-
-        // Helper: Render Single Task
-        function renderTask(id, task) {
-            const li = document.createElement("li");
-            li.setAttribute('data-id', id);
-            li.innerHTML = `
-                <div class="task-header">
-                    <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
-                    <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
-                    <div class="btn-group">
-                        <button class="icon-btn details-btn">📝</button>
-                        <button class="icon-btn delete-btn">✕</button>
-                    </div>
-                </div>
-                <div class="task-details" id="details-${id}">
-                    <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
-                    <button class="save-note-btn" data-id="${id}">Save Note</button>
-                </div>
-            `;
-            listContainer.appendChild(li);
-
-            // Button Listeners
-            const userTodosRef = collection(db, "users", currentUser.uid, "todos");
-            
-            li.querySelector('.checkbox-btn').addEventListener('change', () => 
-                updateDoc(doc(userTodosRef, id), { done: !task.done }));
-            
-            li.querySelector('.details-btn').addEventListener('click', () => 
-                document.getElementById(`details-${id}`).classList.toggle("open"));
-            
-            li.querySelector('.delete-btn').addEventListener('click', () => 
-                { if(confirm("Delete?")) deleteDoc(doc(userTodosRef, id)); });
-            
-            li.querySelector('.save-note-btn').addEventListener('click', () => {
-                 updateDoc(doc(userTodosRef, id), { note: document.getElementById(`note-${id}`).value });
-                 alert("Note saved!");
-            });
-        }
-
-        // Initialize Drag & Drop
+        
         new Sortable(listContainer, { animation: 150, handle: '.task-header' });
-
     </script>
 </body>
 </html>

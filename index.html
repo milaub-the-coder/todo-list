@@ -21,7 +21,6 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            /* Prevent pull-to-refresh on mobile which feels web-like */
             overscroll-behavior-y: none; 
         }
 
@@ -60,7 +59,6 @@
 
         ul { list-style-type: none; padding: 0; }
 
-        /* The Task Card */
         li {
             background: #fff;
             border: 1px solid #eee;
@@ -151,5 +149,88 @@
           appId: "1:958944898366:web:dfe3c5fab08450d392d06f"
         };
 
-        // 3. Initialize Firebase
-        const app = initialize
+        // 3. LOGIC START
+        console.log("Starting App...");
+
+        try {
+            // Initialize
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const colRef = collection(db, "todos");
+            const inputBox = document.getElementById("task-input");
+            const listContainer = document.getElementById("list-container");
+
+            console.log("Firebase initialized. Connecting...");
+
+            // 4. SYNC ENGINE
+            const q = query(colRef, orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                console.log("Database Update Received. Items:", snapshot.docs.length);
+                listContainer.innerHTML = ""; 
+                
+                snapshot.docs.forEach(docSnap => {
+                    const task = docSnap.data();
+                    const id = docSnap.id;
+                    const li = document.createElement("li");
+                    li.setAttribute('data-id', id);
+                    li.innerHTML = `
+                        <div class="task-header">
+                            <input type="checkbox" ${task.done ? "checked" : ""} class="checkbox-btn">
+                            <span class="task-text ${task.done ? "checked" : ""}">${task.text}</span>
+                            <div class="btn-group">
+                                <button class="icon-btn details-btn">📝</button>
+                                <button class="icon-btn delete-btn">✕</button>
+                            </div>
+                        </div>
+                        <div class="task-details" id="details-${id}">
+                            <textarea id="note-${id}" placeholder="Notes...">${task.note || ''}</textarea>
+                            <button class="save-note-btn" data-id="${id}">Save Note</button>
+                        </div>
+                    `;
+                    listContainer.appendChild(li);
+
+                    // Listeners
+                    li.querySelector('.checkbox-btn').addEventListener('change', () => updateDoc(doc(db, "todos", id), { done: !task.done }));
+                    li.querySelector('.details-btn').addEventListener('click', () => document.getElementById(`details-${id}`).classList.toggle("open"));
+                    li.querySelector('.delete-btn').addEventListener('click', () => { if(confirm("Delete?")) deleteDoc(doc(db, "todos", id)); });
+                    li.querySelector('.save-note-btn').addEventListener('click', () => {
+                        updateDoc(doc(db, "todos", id), { note: document.getElementById(`note-${id}`).value });
+                        alert("Note saved!");
+                    });
+                });
+            }, (error) => {
+                console.error("SYNC ERROR:", error);
+                alert("Database Error: " + error.message);
+            });
+
+            // 5. ADD TASK
+            document.getElementById("add-btn").addEventListener("click", async () => {
+                const text = inputBox.value.trim();
+                if (!text) return;
+                try {
+                    await addDoc(colRef, {
+                        text: text, done: false, note: "", createdAt: serverTimestamp()
+                    });
+                    inputBox.value = "";
+                } catch (e) {
+                    console.error("ADD ERROR:", e);
+                    alert("Write Error: " + e.message);
+                }
+            });
+
+            // Enter Key
+            inputBox.addEventListener("keypress", (e) => {
+                if(e.key === "Enter") document.getElementById("add-btn").click(); 
+            });
+
+            // Drag and Drop
+            new Sortable(listContainer, { animation: 150, handle: '.task-header' });
+
+        } catch (e) {
+            console.error("CRITICAL FAILURE:", e);
+            alert("App failed to load: " + e.message);
+        }
+    </script>
+</body>
+</html>
